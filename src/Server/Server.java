@@ -10,7 +10,6 @@ public class Server {
 	private static ServerSocket serverSocket = null;
 	private static ArrayList<Service> serviceList = new ArrayList<Service>();
 	
-	
 	public static void main(String[] argv){
 		System.out.println("[SERVER] Start");
 		ExecutorService pool = Executors.newFixedThreadPool(Server.numThreads);
