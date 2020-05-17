@@ -1,32 +1,57 @@
 import Server
 import User
 
+HEADER_LENGTH = 10
+
 class Service:
-    def __init__(self, user, socket):
-        self.user = user
+    def __init__(self, socket, addr, database, lock):
         self.socket = socket
+        self.addr = addr
+        self.database = database
+        self.lock = lock
+        self.username = None
+        
+    def Receive_message(self):
+        message_header = self.socket.recv(HEADER_LENGTH)
 
-    def register(self, server, name, password, ip):
-        for user in server.userList:
-            if user.userName == name:
-                return False
-        newUser = User(address=ip, name=name, password=password)
-        server.userList.append(newUser)
-        return True
+        if not len(message_header):
+            return None,None
 
-    def login(self, server, name, password, ip):
-        for user in server.userList:
-            if user.userName == name and user.password == password:
-                user.status = True
-                user.ip = ip
-                return True
-        return False
+        # Convert header to int value
+        message_length = int(message_header.decode('utf-8').strip())
 
-    def addFriend(self, server, sender, receiver):  # userName of sender and receiver
-        for user in server.userList:
-            if user.userName == receiver:  # if exist receiver
-                if receiver in sender.friendList:  # if be friend already, return false
-                    return False
-                receiver.friendRequest.append(sender)
-                return True
+        # Return an object of message header and message data
+        return {'header': message_header, 'data': self.socket.recv(message_length).decode('utf-8')}
+    def Send_message(self, message):
+        message = message.encode('utf-8')
+        message_header = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
+        self.socket.send(message_header + message)
 
+    def Register(self):
+        self.Send_message('Input username: ')
+        username = self.Receive_message()['data']
+        self.Send_message('Input password: ')
+        password = self.Receive_message()['data']
+
+        if username is None or password is None:
+            self.Send_message('Failed')
+            return
+
+        if self.database.addUser(username, password):
+            self.Send_message('Successed')
+            self.username = username
+            self.password = password
+            print("Welcome", username)
+        else:
+            self.Send_message('Failed')
+
+    def verify(self):
+        while True:
+            cmd = self.socket.recv(HEADER_LENGTH)
+            if cmd.decode('utf-8') == 'Register':
+                self.Register()
+            #elif cmd.decode('utf-8') == 'Login':
+            #    self.Login()
+            elif cmd.decode('utf-8') == 'Exit':
+                break
+            
