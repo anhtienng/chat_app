@@ -22,6 +22,7 @@ class Service:
 
         # Return an object of message header and message data
         return {'header': message_header, 'data': self.socket.recv(message_length).decode('utf-8')}
+
     def Send_message(self, message):
         message = message.encode('utf-8')
         message_header = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
@@ -45,13 +46,45 @@ class Service:
         else:
             self.Send_message('Failed')
 
+    def Register2(self):
+        username = self.Receive_message()['data']
+        password = self.Receive_message()['data']
+
+        if username is None or password is None:
+            self.Send_message('Failed')
+            return
+
+        if self.database.addUser(username, password):
+            self.Send_message('Successed')
+            self.username = username
+            self.password = password
+            print("Welcome", username)
+        else:
+            self.Send_message('Failed')
+
+    def Login(self):
+        # TODO
+        #....
+        pass
+
+    def __call__(self):
+        # TODO
+        #....
+        pass
+
     def verify(self):
         while True:
-            cmd = self.socket.recv(HEADER_LENGTH)
-            if cmd.decode('utf-8') == 'Register':
-                self.Register()
+            #cmd = self.socket.recv(HEADER_LENGTH)
+            #if cmd.decode('utf-8') == 'Register':
+            #    self.Register()
             #elif cmd.decode('utf-8') == 'Login':
             #    self.Login()
-            elif cmd.decode('utf-8') == 'Exit':
-                break
+            #elif cmd.decode('utf-8') == 'Exit':
+            #    break
+
+            cmd = self.Receive_message()['data']
+            if cmd == 'Register':
+                self.Register()
+
+            #elif... 
             

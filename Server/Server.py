@@ -11,12 +11,14 @@ class Server:
         self.numthread = numthread
         self.database = Database.Database()
         self.lock = threading.Lock()
-        self.serviceList = []
+        self.serviceList = {}
         self.shutdown = False
         self.admin_socket = None
         self.admin_addr = None
 
     def Listen(self):
+        #Start listen 
+
         self.socket.listen()
 
     def Run(self):
@@ -32,6 +34,8 @@ class Server:
         self.socket.close()
 
     def Verify_thread(self, service):
+        #Start thread
+        #Args: Service object
         service.verify()
         username = service.username
         if username == 'admin':
