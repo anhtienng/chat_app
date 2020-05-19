@@ -1,63 +1,129 @@
 import User
+import pickle
+import threading
+
 
 class Database:
     def __init__(self):
-        self.userDict = {} # Key: username --- Val: class User
-        self.userFriend = {} # Key: username -- Val: Friendlist
-        self.userFriendRequest = {} # Key: username -- Val: Friend request list
-        self.load()
+        self.userDict = {}              # Key: username --- Val: <User>
+                                        # ex: userDict['tienanh'] = User tienanh
+
+        self.userFriend = {}            # Key: username -- Val: list contains all names of friends of username
+                                        # ex: userFriend['tienanh'] = ['khoi', 'huy']
+
+        self.userFriendRequest = {}     # Key: username -- Val: list contains all names of friend-requests of username
+                                        # ex: userFriendRequest['tienanh'] = ['khoi1', 'huy1']
+        self.lock = threading.Lock()
 
     def save(self):
         # TODO
         # save data to file
-        pass
+        with open("Data/userDict.pkl", "wb") as f1:
+            pickle.dump(self.userDict, f1, pickle.HIGHEST_PROTOCOL)
+        with open("Data/userFriend.pkl", "wb") as f2:
+            pickle.dump(self.userFriend, f2, pickle.HIGHEST_PROTOCOL)
+        with open("Data/userFriendRequest.pkl", "wb") as f3:
+            pickle.dump(self.userFriendRequest, f3, pickle.HIGHEST_PROTOCOL)
 
     def load(self):
         # TODO
-        # retreive data from file 
-        pass
+        # retreive data from file
+        with open('Data/userDict.pkl', 'rb') as f1:
+            self.userDict = pickle.load(f1)
+        with open('Data/userFriend.pkl', 'rb') as f2:
+            self.userFriend = pickle.load(f2)
+        with open('Data/userFriendRequest.pkl', 'rb') as f3:
+            self.userFriendRequest = pickle.load(f3)
 
-    def Username_Availability(self, username):
+    def isRegistered(self, username):
         if username in self.userDict:
-            return False
-        else:
             return True
+        else:
+            return False
+
+    def getStatus (self, username):
+        if not self.isRegistered(username):
+            return
+        return self.userDict[username].status
 
     def addUser(self, username, password):
-        #Add new user
-
-        if not self.Username_Availability(username):
+        # Add new user
+        if self.isRegistered(username):
             return False
+        self.lock.acquire()
         self.userDict[username] = User.User(username, password)
         self.userFriend[username] = {}
+        self.userFriendRequest[username] = {}
+        self.lock.release()
         return True
 
     def addFriend(self, username1, username2):
         # TODO
-        # Args: username1, username2
-        # Send a friend request from user whose name is username1 to user whose name is username2
-        pass
+        # Args: username1:sender, username2: receiver
+        # Add username1 into friendRequest of username2
+        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
+            return
+        listFriend = self.userFriend[username2]
+        listRequest = self.userFriendRequest[username2]
+        if username1 in listFriend or username1 in listRequest:
+            return
+        else:
+            self.lock.acquire()
+            listRequest.append(username1)
+            self.lock.release()
 
-    def showFriendList(self, username):
+    def showFriend(self, username):
         # TODO
         # Args: username
-        # return: an ordered friendlist of user whose name is username
-        pass 
+        # return: a ordered dict {friendName: status}, online first
+        if not self.isRegistered(username):
+            return
+        friendList = self.userFriend[username]
+        friendDict = {}
+        for friend in friendList:
+            friendDict[friend] = self.getStatus(friend)
+        friendDict = {k: v for k, v in sorted(friendDict.items(), key=lambda item: item[1], reverse=True)}
+        return friendDict
 
     def showFriendRequest(self, username):
         # TODO
         # Args: username
         # return: an unordered list of friend requests of user with name username
-        pass
+        if not self.isRegistered(username):
+            return
+        else:
+            return self.userFriendRequest[username]
 
     def acceptFriendRequest(self, username1, username2):
         # TODO
         # Args: username1, username2
         # Accept friend request of username1 for username2. Adding them in their friendlist
-        pass
+        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
+            return
+        listFriend1 = self.userFriend[username1]
+        listFriend2 = self.userFriend[username2]
+        listRequest2 = self.userFriendRequest[username2]
+        if username1 in listFriend2 or username1 not in listRequest2:  # friend already or not request yet
+            return
+        else:
+            self.lock.acquire()
+            listFriend1.append(username2)
+            listFriend2.append(username1)
+            listRequest2.remove(username1)
+            self.lock.release()
 
-
-
-
-
-
+    def rejectFriendRequest(self, username1, username2):
+        # TODO
+        # Args: username1, username2
+        # Reject friend request of username1 for username2.
+        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
+            return
+        listFriend1 = self.userFriend[username1]
+        listFriend2 = self.userFriend[username2]
+        listRequest2 = self.userFriendRequest[username2]
+        if username1 in listFriend2 or username1 not in listRequest2:  # friend already or not request yet
+            return
+        else:
+            self.lock.acquire()
+            listRequest2.remove(username1)
+            self.lock.release()
