@@ -128,6 +128,8 @@ class Client:
         else:
             return False
 
+    def shutdown(self):
+        self.Send_message("shutdown")
 
     def close(self):
         self.Send_message('done')

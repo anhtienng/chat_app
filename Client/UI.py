@@ -62,6 +62,10 @@ class UI:
                     request = self.client.showFriendRequest()
                     print(request)
 
+                elif cmd == "shutdown":
+                    self.client.shutdown()
+                    return
+
 
             elif self.state == 2:
                 break

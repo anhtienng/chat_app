@@ -1,5 +1,6 @@
 import Server
 import User
+import threading
 
 HEADER_LENGTH = 10
 
@@ -8,14 +9,13 @@ class Service:
         self.socket = socket
         self.addr = addr
         self.database = database
-        self.lock = lock
+        self.lock = threading.Lock()
         self.username = None
         
     def Receive_message(self):
         message_header = self.socket.recv(HEADER_LENGTH)
 
         if not len(message_header):
-            self.close()
             return {'header': None,'data': None}
 
         # Convert header to int value
@@ -122,20 +122,33 @@ class Service:
         while True:
             cmd = self.Receive_message()['data']
             if cmd == 'done':
+                self.lock.acquire()
                 self.close_response()
+                self.lock.release()
                 break
             elif cmd == 'addFriend':
+                self.lock.acquire()
                 self.addFriend()
+                self.lock.release()
             elif cmd == 'acceptFriendRequest':
+                self.lock.acquire()
                 self.acceptFriendRequest()
+                self.lock.release()
             elif cmd == 'rejectFriendRequest':
+                self.lock.acquire()
                 self.rejectFriendRequest()
+                self.lock.release()
             elif cmd == 'showFriendRequest':
+                self.lock.acquire()
                 self.showFriendRequest()
+                self.lock.release()
             elif cmd == 'showFriend':
+                self.lock.acquire()
                 self.showFriend()
-            else:
-                self.Send_message(cmd)
+                self.lock.release()
+            elif cmd == 'shutdown':
+                if self.username == 'admin':
+                    return True
 
 
     def accept(self):

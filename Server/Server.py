@@ -4,6 +4,8 @@ import Database
 import Service
 
 HEADER_LENGTH = 10
+HOST = "127.0.0.1"
+PORT = 5050
 
 class Server:
     def __init__(self, socket, numthread = 10):
@@ -23,16 +25,22 @@ class Server:
 
     def Run(self):
         self.Listen()
-        
-        while not self.shutdown:
-            conn, addr = self.socket.accept()
+         
+        while True:
+            self.lock.acquire()
+            if not self.shutdown:
+                self.lock.release()
+                conn, addr = self.socket.accept()
+            else:
+                self.lock.release()
+                break
             print("Connected by: ", addr)
             #print("Num: ", self.serviceList)
             service = Service.Service(conn, addr, self.database, self.lock)
             thread = threading.Thread(target=self.Verify_thread, args=(service,))
             thread.start()
 
-
+        self.shutdownAllService()
         self.socket.close()
 
     def Verify_thread(self, service):
@@ -40,35 +48,38 @@ class Server:
         #Args: Service object
 
         self.lock.acquire()
-        if len(self.serviceList) >= self.numthread:
+        if len(self.serviceList) >= self.numthread or self.shutdown == True:
             self.lock.release()
-            service.close()
+            service.close_response()
             return
         self.lock.release()
         service.accept()
         
         service.verify()
         username = service.username
-        if username == 'admin':
-            self.admin_socket = service.socket
-            self.addr = service.addr
-            self.Administration()
-        elif username is not None:
-            self.serviceList[username] = service
 
-            service()
+        if username is not None:
+            self.lock.acquire()
+            self.serviceList[username] = service
+            self.lock.release()
+
+            if service():
+                self.lock.acquire()
+                self.shutdown = True
+                self.socket.close()
+                self.lock.release()
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((HOST, PORT))
+                s.close()
 
             self.lock.acquire()
             del self.serviceList[username]
             self.lock.release()
 
-    def Administration(self):
-        while True:
-            command = self.admin_socket.recv(HEADER_LENGTH)
-            command = command.decode('utf-8')
-            if command == 'Shutdown':
-                self.lock.acquire()
-                self.shutdown = True
-                self.lock.release()
+    def shutdownAllService(self):
+        for _ in self.serviceList:
+            _.lock.acquire()
+            _.close()
+            _.lock.release()
 
 
