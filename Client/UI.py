@@ -10,7 +10,7 @@ class UI:
         while True:
             if self.state == 0:
                 cmd = input("Register/Login??? ")
-                if cmd == "Register":
+                if cmd == "register":
                     self.client.Connect()
                     username = input("Username: ")
                     password = getpass("Password: ")
@@ -18,7 +18,7 @@ class UI:
                         self.client.close()
                     else:
                         self.state = 1
-                elif cmd == "Login":
+                elif cmd == "login":
                     self.client.Connect()
                     username = input("Username: ")
                     password = getpass("Password: ")
@@ -32,6 +32,36 @@ class UI:
                 if cmd == "done":
                     self.client.close()
                     self.state = 2
+
+                elif cmd == "add":
+                    username = input("Input username: ")
+                    if self.client.addFriend(username):
+                        print("success")
+                    else:
+                        print("failed")
+
+                elif cmd == "accept":
+                    username = input("Input username: ")
+                    if self.client.acceptFriendRequest(username):
+                        print("success")
+                    else:
+                        print("failed")
+
+                elif cmd == "reject":
+                    username = input("Input username: ")
+                    if self.client.rejectFriendRequest(username):
+                        print("success")
+                    else:
+                        print("failed")
+
+                elif cmd == "friend":
+                    friend = self.client.showFriend()
+                    print(friend)
+
+                elif cmd == "request":
+                    request = self.client.showFriendRequest()
+                    print(request)
+
 
             elif self.state == 2:
                 break

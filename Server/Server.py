@@ -27,11 +27,12 @@ class Server:
         while not self.shutdown:
             conn, addr = self.socket.accept()
             print("Connected by: ", addr)
-            print("Num: ", self.serviceList)
+            #print("Num: ", self.serviceList)
             service = Service.Service(conn, addr, self.database, self.lock)
             thread = threading.Thread(target=self.Verify_thread, args=(service,))
             thread.start()
-        
+
+
         self.socket.close()
 
     def Verify_thread(self, service):

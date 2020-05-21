@@ -57,7 +57,7 @@ class Database:
         self.lock.release()
         return True
 
-    def addFriend(self, username1, username2):
+    def addFriend(self, username1, username2):  # chua handle add chinh no
         # TODO
         # Args: username1:sender, username2: receiver
         # Add username1 into friendRequest of username2
@@ -71,6 +71,7 @@ class Database:
             self.lock.acquire()
             listRequest.append(username1)
             self.lock.release()
+            print(self.userFriendRequest[username2])
             return True
 
     def showFriend(self, username):
@@ -83,7 +84,7 @@ class Database:
         friendDict = {}
         for friend in friendList:
             friendDict[friend] = self.getStatus(friend)
-        friendDict = {k: v for k, v in sorted(friendDict.items(), key=lambda item: item[1], reverse=True)}
+        #friendDict = {k: v for k, v in sorted(friendDict.items(), key=lambda item: item[1], reverse=True)}
         return friendDict
 
     def showFriendRequest(self, username):
@@ -95,16 +96,20 @@ class Database:
         else:
             return self.userFriendRequest[username]
 
-    def acceptFriendRequest(self, username1, username2):
+    def acceptFriendRequest(self, username2, username1):
         # TODO
         # Args: username1, username2
         # Accept friend request of username1 for username2. Adding them in their friendlist
-        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
+        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):
+            print("1")
             return False
         listFriend1 = self.userFriend[username1]
         listFriend2 = self.userFriend[username2]
         listRequest2 = self.userFriendRequest[username2]
-        if username1 in listFriend2 or username1 not in listRequest2:  # friend already or not request yet
+        if (username1 in listFriend2) or (username1 not in listRequest2):  # friend already or not request yet
+            print("2")
+            print(username1)
+            print(listRequest2)
             return False
         else:
             self.lock.acquire()
@@ -112,9 +117,13 @@ class Database:
             listFriend2.append(username1)
             listRequest2.remove(username1)
             self.lock.release()
+            print(self.userFriendRequest[username1])
+            print(self.userFriendRequest[username2])
+            print(self.userFriend[username1])
+            print(self.userFriend[username2])
             return True
 
-    def rejectFriendRequest(self, username1, username2):
+    def rejectFriendRequest(self, username2, username1):
         # TODO
         # Args: username1, username2
         # Reject friend request of username1 for username2.

@@ -75,12 +75,12 @@ class Client:
         if response == "Successed":
             length = self.socket.recv(HEADER_LENGTH)
             length = int(length.decode('utf-8').strip())
-            friendList = {}
+            friendDict = {}
             for _ in range(length):
                 username = self.Receive_message()['data']
                 status = self.Receive_message()['data']
-                friendList[username] = status
-            return friendList
+                friendDict[username] = status
+            return friendDict
 
         else:
             return None
@@ -91,15 +91,43 @@ class Client:
         if response == "Successed":
             length = self.socket.recv(HEADER_LENGTH)
             length = int(length.decode('utf-8').strip())
-            requestList = {}
+            requestList = []
             for _ in range(length):
                 username = self.Receive_message()['data']
-                status = self.Receive_message()['data']
-                requestList[username] = status
+                #status = self.Receive_message()['data']
+                requestList.append(username)
             return requestList
 
         else:
             return None
+            
+    def acceptFriendRequest(self, username2):
+        self.Send_message("acceptFriendRequest")
+        self.Send_message(username2)
+        response = self.Receive_message()['data']
+        if response == "Successed":
+            return True
+        else:
+            return False
+        
+    def rejectFriendRequest(self, username2):
+        self.Send_message("rejectFriendRequest")
+        self.Send_message(username2)
+        response = self.Receive_message()['data']
+        if response == "Successed":
+            return True
+        else:
+            return False
+
+    def addFriend(self, username2):
+        self.Send_message("addFriend")
+        self.Send_message(username2)
+        response = self.Receive_message()['data']
+        if response == "Successed":
+            return True
+        else:
+            return False
+
 
     def close(self):
         self.Send_message('done')

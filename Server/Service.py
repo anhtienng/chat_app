@@ -67,17 +67,16 @@ class Service:
             self.Send_message('Failed')
 
     def showFriend(self):
-        friendList = self.database.showFriend(self.username)
-        if friendList == None:
+        friendDict = self.database.showFriend(self.username)
+        if friendDict == None:
             self.Send_message('Failed')
 
         else:
             self.Send_message('Successed')
-            length = len(friendList)
+            length = len(friendDict)
             length = f"{length:<{HEADER_LENGTH}}".encode('utf-8')
             self.socket.send(length)
-
-            for key, val in friendList:
+            for key, val in friendDict.items():
                 self.Send_message(key)
                 if val:
                     self.Send_message("Online")
@@ -125,9 +124,19 @@ class Service:
             if cmd == 'done':
                 self.close_response()
                 break
+            elif cmd == 'addFriend':
+                self.addFriend()
+            elif cmd == 'acceptFriendRequest':
+                self.acceptFriendRequest()
+            elif cmd == 'rejectFriendRequest':
+                self.rejectFriendRequest()
+            elif cmd == 'showFriendRequest':
+                self.showFriendRequest()
+            elif cmd == 'showFriend':
+                self.showFriend()
             else:
                 self.Send_message(cmd)
-            #elif... 
+
 
     def accept(self):
         self.Send_message('accept')
