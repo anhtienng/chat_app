@@ -14,6 +14,7 @@ class Database:
         self.userFriendRequest = {}     # Key: username -- Val: list contains all names of friend-requests of username
                                         # ex: userFriendRequest['tienanh'] = ['khoi1', 'huy1']
         self.lock = threading.Lock()
+        self.load()
 
     def save(self):
         # TODO
@@ -57,7 +58,7 @@ class Database:
         self.lock.release()
         return True
 
-    def addFriend(self, username1, username2):  # chua handle add chinh no
+    def addFriend(self, username1, username2):
         # TODO
         # Args: username1:sender, username2: receiver
         # Add username1 into friendRequest of username2
@@ -65,7 +66,7 @@ class Database:
             return False
         listFriend = self.userFriend[username2]
         listRequest = self.userFriendRequest[username2]
-        if username1 in listFriend or username1 in listRequest:
+        if username1 in listFriend or username1 in listRequest or username1 == username2:
             return False
         else:
             self.lock.acquire()
@@ -101,15 +102,11 @@ class Database:
         # Args: username1, username2
         # Accept friend request of username1 for username2. Adding them in their friendlist
         if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):
-            print("1")
             return False
         listFriend1 = self.userFriend[username1]
         listFriend2 = self.userFriend[username2]
         listRequest2 = self.userFriendRequest[username2]
-        if (username1 in listFriend2) or (username1 not in listRequest2):  # friend already or not request yet
-            print("2")
-            print(username1)
-            print(listRequest2)
+        if (username1 in listFriend2) or (username1 not in listRequest2) or (username1 == username2):
             return False
         else:
             self.lock.acquire()
@@ -117,22 +114,18 @@ class Database:
             listFriend2.append(username1)
             listRequest2.remove(username1)
             self.lock.release()
-            print(self.userFriendRequest[username1])
-            print(self.userFriendRequest[username2])
-            print(self.userFriend[username1])
-            print(self.userFriend[username2])
             return True
 
     def rejectFriendRequest(self, username2, username1):
         # TODO
         # Args: username1, username2
         # Reject friend request of username1 for username2.
-        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
+        if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):
             return False
         listFriend1 = self.userFriend[username1]
         listFriend2 = self.userFriend[username2]
         listRequest2 = self.userFriendRequest[username2]
-        if username1 in listFriend2 or username1 not in listRequest2:  # friend already or not request yet
+        if username1 in listFriend2 or username1 not in listRequest2 or username1 == username2:
             return False
         else:
             self.lock.acquire()

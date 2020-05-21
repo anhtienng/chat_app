@@ -137,7 +137,6 @@ class Service:
             else:
                 self.Send_message(cmd)
 
-
     def accept(self):
         self.Send_message('accept')
 
