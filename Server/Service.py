@@ -150,7 +150,6 @@ class Service:
                 if self.username == 'admin':
                     return True
 
-
     def accept(self):
         self.Send_message('accept')
 
