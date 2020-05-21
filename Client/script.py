@@ -1,7 +1,7 @@
 import Client
 import socket
+import UI
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-client = Client.Client(client_socket)
-client.Run()
+client = Client.Client()
+ui = UI.UI(client)
+ui.Run()

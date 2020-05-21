@@ -78,7 +78,7 @@ class Database:
         # Args: username
         # return: a ordered dict {friendName: status}, online first
         if not self.isRegistered(username):
-            return = None
+            return None
         friendList = self.userFriend[username]
         friendDict = {}
         for friend in friendList:
@@ -129,4 +129,29 @@ class Database:
             self.lock.acquire()
             listRequest2.remove(username1)
             self.lock.release()
+            return True
+
+    def Login(self, username, password):
+        if not self.isRegistered(username):
+            return False
+        
+        if self.userDict[username].password != password:
+            return Fasle
+
+        return True
+
+    def online(self, username):
+        if not self.isRegistered(username):
+            return False
+        
+        else:
+            self.userDict[username].status = True
+            return True
+
+    def offline(self, username):
+        if not self.isRegistered(username):
+            return False
+
+        else:
+            self.userDict[username].status = False
             return True

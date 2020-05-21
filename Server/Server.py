@@ -27,6 +27,7 @@ class Server:
         while not self.shutdown:
             conn, addr = self.socket.accept()
             print("Connected by: ", addr)
+            print("Num: ", self.serviceList)
             service = Service.Service(conn, addr, self.database, self.lock)
             thread = threading.Thread(target=self.Verify_thread, args=(service,))
             thread.start()
@@ -36,6 +37,15 @@ class Server:
     def Verify_thread(self, service):
         #Start thread
         #Args: Service object
+
+        self.lock.acquire()
+        if len(self.serviceList) >= self.numthread:
+            self.lock.release()
+            service.close()
+            return
+        self.lock.release()
+        service.accept()
+        
         service.verify()
         username = service.username
         if username == 'admin':
@@ -43,15 +53,9 @@ class Server:
             self.addr = service.addr
             self.Administration()
         elif username is not None:
-            self.lock.acquire()
-            if len(serviceList) < self.numthread:
-                self.serviceList[username] = service
-            else:
-                return
-            self.lock.release()
+            self.serviceList[username] = service
 
             service()
-            service.shut_down()
 
             self.lock.acquire()
             del self.serviceList[username]
