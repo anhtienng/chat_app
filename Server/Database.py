@@ -14,7 +14,7 @@ class Database:
         self.userFriendRequest = {}     # Key: username -- Val: list contains all names of friend-requests of username
                                         # ex: userFriendRequest['tienanh'] = ['khoi1', 'huy1']
         self.lock = threading.Lock()
-        self.load()
+        #self.load()
 
     def save(self):
         # TODO
