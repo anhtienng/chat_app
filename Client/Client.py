@@ -4,8 +4,8 @@ import threading
 import Buffer
 HEADER_LENGTH = 10
 
-HOST = "127.0.0.1"
-PORT = 5050
+HOST = "192.168.2.15" # Server's IP
+PORT = 13000
 
 class Client:
     def __init__(self):
@@ -28,7 +28,7 @@ class Client:
 
     def Listen(self):
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.bind((HOST,0))
+        self.listen_socket.bind(("",0))
         self.setPort()
         self.listen_thread = threading.Thread(target=self.listen_run, args=())
         self.listen_thread.start()
@@ -36,7 +36,10 @@ class Client:
     def setPort(self):
         print('setPort')
         self.Send_message('setPort')
+        host = self.listen_socket.getsockname()[0]
         port = self.listen_socket.getsockname()[1]
+
+        self.Send_message(host)
         port = f"{port:<{HEADER_LENGTH}}".encode('utf-8')
         self.socket.send(port)
         
@@ -45,9 +48,10 @@ class Client:
         self.Send_message(username)
         response = self.Receive_message()['data']
         if response == 'Successed':
+            host = self.Receive_message()['data']
             port = self.socket.recv(HEADER_LENGTH)
             port = int(port.decode('utf-8').strip())
-            return port
+            return (host, port)
         else:
             return None
 
@@ -175,18 +179,18 @@ class Client:
         self.listen_socket.listen()
         while True:
             conn, addr = self.listen_socket.accept()
-            buff = Buffer.Buffer()
-            service = Service_client.Service_client(conn, buff, self.lock, self.username)
+            buff = Buffer.Buffer(self.lock)
+            service = Service_client.Service_client(conn, buff, self.username)
             self.buff_dict[service.peer] = service.buffer
             service.start()
 
     def startChatTo(self, username):
-        port = self.requestPort(username)
+        (host, port) = self.requestPort(username)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        buff = Buffer.Buffer()
-        service = Service_client.Service_client(s, buff, self.lock, self.username, peer = username)
+        buff = Buffer.Buffer(self.lock)
+        service = Service_client.Service_client(s, buff, self.username, peer = username)
         self.buff_dict[username] = service.buffer
-        service.connectTo(port)
+        service.connectTo(host, port)
         service.start()
 
     def chatTo(self, username, message):

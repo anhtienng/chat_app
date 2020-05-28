@@ -120,19 +120,22 @@ class Service:
 
     def setPort(self):
         print('ok')
+        host = self.Receive_message()['data']
         port = self.socket.recv(HEADER_LENGTH)
+        self.listen_host = host
         self.listen_port = int(port.decode('utf-8').strip())
-        print(self.listen_port)
-        self.database.setPort(self.username, self.listen_port)
+        print(self.listen_host, self.listen_port)
+        self.database.setPort(self.username, self.listen_host, self.listen_port)
 
     def requestPort(self):
         username = self.Receive_message()['data']
         print(username)
-        port = self.database.port_dict[username]
-        if port is None:
+        host, port = self.database.port_dict[username]
+        if port is None or host is None:
             self.Send_message('Failed')
         else:
             self.Send_message('Successed')
+            self.Send_message(host)
             port = f"{port:<{HEADER_LENGTH}}".encode('utf-8')
             self.socket.send(port)
 

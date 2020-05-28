@@ -28,9 +28,8 @@ class Database:
         with open("Data/userFriendRequest.pkl", "wb") as f3:
             pickle.dump(self.userFriendRequest, f3, pickle.HIGHEST_PROTOCOL)
 
-    def setPort(self, username, port):
-        self.port_dict[username] = port
-        print(username, port)
+    def setPort(self, username, host, port):
+        self.port_dict[username] = (host, port)
 
     def load(self):
         # TODO

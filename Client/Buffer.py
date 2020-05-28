@@ -1,5 +1,6 @@
 class Buffer:
-    def __init__(self):
+    def __init__(self, lock):
+        self.lock = lock
         self.cmd = ''
         self. content = ''
 
@@ -10,8 +11,10 @@ class Buffer:
             return 0
 
     def assign(self, cmd, content):
+        self.lock.acquire()
         self.cmd = cmd
         self.content = content
+        self.lock.release()
 
     def string(self):
         return self.cmd, self.content

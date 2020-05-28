@@ -76,6 +76,11 @@ class UI:
                     message = input('message: ')
                     self.client.chatTo(username, message)
 
+                elif cmd == 'file':
+                    username = input('username: ')
+                    filename = input('filename: ')
+                    self.client.sendFileTo(username, filename)
+
                 elif cmd == "shutdown":
                     self.client.shutdown()
                     return

@@ -1,13 +1,14 @@
 import threading
+import os
 
 HEADER_LENGTH = 10
 HOST = '127.0.0.1'
+Destination = 'download/'
 
 class Service_client(threading.Thread):
-    def __init__(self, socket, buff, lock, username, peer = None):
+    def __init__(self, socket, buff, username, peer = None):
         super(Service_client, self).__init__()
         self.socket = socket
-        self.lock = lock
         self.username = username
         if peer is not None:
             self.peer = peer
@@ -27,13 +28,29 @@ class Service_client(threading.Thread):
         # Return an object of message header and message data
         return {'header': message_header, 'data': self.socket.recv(message_length).decode('utf-8')}
 
-    def connectTo(self, port):
-        self.socket.connect((HOST,port))
-
     def Send_message(self, message):
         message = message.encode('utf-8')
         message_header = f"{len(message):<{HEADER_LENGTH}}".encode('utf-8')
         self.socket.send(message_header + message)
+
+    def Receive_byte(self):
+        data_header = self.socket.recv(HEADER_LENGTH)
+
+        if not len(data_header):
+            return {'header': None, 'data': None}
+
+        # Convert header to int value
+        data_length = int(data_header.decode('utf-8').strip())
+
+        # Return an object of message header and message data
+        return {'header': data_header, 'data': self.socket.recv(data_length)}
+
+    def Send_byte(self, data):
+        data_header = f"{len(data):<{HEADER_LENGTH}}".encode('utf-8')
+        self.socket.send(data_header + data)    
+
+    def connectTo(self, host, port):
+        self.socket.connect((host,port))
 
     def Send_SMS(self, message):
         self.Send_message("sendSMS")
@@ -44,13 +61,37 @@ class Service_client(threading.Thread):
         return mess
 
     def Send_File(self, filename):
-        pass
+        if os.path.exists(filename):
+            self.Send_message("sendFile")
+            self.Send_message(filename)
+            
+            with open(filename, "rb") as in_file:
+                while True:
+                    data = in_file.read(1024)
+                    if len(data) == 0:
+                        self.Send_message('EOF')
+                        break
+                    else:
+                        self.Send_message('Data')
+                        self.Send_byte(data)
+            return True
+        else:
+            print('No such file')
+            return False
 
 
     def Receive_File(self):
-        pass
+        filename = Destination + self.Receive_message()['data']
+        with open(filename, "wb") as out_file:
+            while True:
+                response = self.Receive_message()['data']
+                if response == 'EOF':
+                    break
+                else:
+                    data = self.Receive_byte()['data']
+                    out_file.write(data)
+                    
             
-
     def run(self):
         while True:
             if len(self.buffer) == 0:
@@ -79,9 +120,7 @@ class Service_client(threading.Thread):
                 elif cmd == 'SendFile':
                     self.Send_File(content)
 
-                self.lock.acquire()
                 self.buffer.assign('', '')
-                self.lock.release()
 
     def accept(self):
         self.Send_message('accept')

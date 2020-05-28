@@ -4,12 +4,14 @@ import Database
 import Service
 
 HEADER_LENGTH = 10
-HOST = "127.0.0.1"
-PORT = 5050
+HOST = ""
+PORT = 13000
 
 class Server:
-    def __init__(self, socket, numthread = 10):
-        self.socket = socket 
+    def __init__(self, numthread = 10):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.bind((HOST, PORT))
         self.numthread = numthread
         self.database = Database.Database()
         self.lock = threading.Lock()
