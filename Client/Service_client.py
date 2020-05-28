@@ -43,16 +43,13 @@ class Service_client(threading.Thread):
         mess = self.Receive_message()['data']
         return mess
 
-    def sendFile(self):
-        file = self.Receive_message()['data']
-        f = open('file/' + file, 'wb')
-        len_pieces = int(self.Receive_message()['data'])  # number of pieces
-        print("len pieces ", len_pieces)
-        for i in range(len_pieces):
-            data = self.socket.recv(1024)
-            f.write(data)
-        f.close()
-        print("sending successful")
+    def Send_File(self, filename):
+        pass
+
+
+    def Receive_File(self):
+        pass
+            
 
     def run(self):
         while True:
@@ -70,14 +67,17 @@ class Service_client(threading.Thread):
                 elif cmd == 'sendSMS':
                     mess = self.Receive_SMS()
                     print(mess)
+
+                elif cmd == 'sendFile':
+                    self.Receive_File()
+
             else:
                 cmd, content = self.buffer.string()
-                #send SMS to peer
                 if cmd == 'SendSMS':
                     self.Send_SMS(content)
 
-                elif cmd == 'Sendfile':
-                    self.Send_file(content)
+                elif cmd == 'SendFile':
+                    self.Send_File(content)
 
                 self.lock.acquire()
                 self.buffer.assign('', '')

@@ -17,6 +17,7 @@ class UI:
                     if not self.client.Register(username, password):
                         self.client.close()
                     else:
+                        self.client.Listen()
                         self.state = 1
                 elif cmd == "login":
                     self.client.Connect()
@@ -25,6 +26,7 @@ class UI:
                     if not self.client.Login(username, password):
                         self.client.close()
                     else:
+                        self.client.Listen()
                         self.state = 1
 
             elif self.state == 1:
