@@ -62,6 +62,18 @@ class UI:
                     request = self.client.showFriendRequest()
                     print(request)
 
+                elif cmd == "listen":
+                    self.client.Listen()
+
+                elif cmd == 'startchat':
+                    username = input('username: ')
+                    self.client.startChatTo(username)
+
+                elif cmd == 'chat':
+                    username = input('username: ')
+                    message = input('message: ')
+                    self.client.chatTo(username, message)
+
                 elif cmd == "shutdown":
                     self.client.shutdown()
                     return

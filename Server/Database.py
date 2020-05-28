@@ -14,6 +14,8 @@ class Database:
         self.userFriendRequest = {}     # Key: username -- Val: list contains all names of friend-requests of username
                                         # ex: userFriendRequest['tienanh'] = ['khoi1', 'huy1']
         self.lock = threading.Lock()
+
+        self.port_dict = {}
         #self.load()
 
     def save(self):
@@ -25,6 +27,10 @@ class Database:
             pickle.dump(self.userFriend, f2, pickle.HIGHEST_PROTOCOL)
         with open("Data/userFriendRequest.pkl", "wb") as f3:
             pickle.dump(self.userFriendRequest, f3, pickle.HIGHEST_PROTOCOL)
+
+    def setPort(self, username, port):
+        self.port_dict[username] = port
+        print(username, port)
 
     def load(self):
         # TODO

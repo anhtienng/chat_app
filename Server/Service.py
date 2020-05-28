@@ -118,6 +118,24 @@ class Service:
         else:
             self.Send_message("Failed")
 
+    def setPort(self):
+        print('ok')
+        port = self.socket.recv(HEADER_LENGTH)
+        self.listen_port = int(port.decode('utf-8').strip())
+        print(self.listen_port)
+        self.database.setPort(self.username, self.listen_port)
+
+    def requestPort(self):
+        username = self.Receive_message()['data']
+        print(username)
+        port = self.database.port_dict[username]
+        if port is None:
+            self.Send_message('Failed')
+        else:
+            self.Send_message('Successed')
+            port = f"{port:<{HEADER_LENGTH}}".encode('utf-8')
+            self.socket.send(port)
+
     def __call__(self):
         while True:
             cmd = self.Receive_message()['data']
@@ -146,6 +164,14 @@ class Service:
                 self.lock.acquire()
                 self.showFriend()
                 self.lock.release()
+            elif cmd == 'setPort':
+                self.lock.acquire()
+                self.setPort()
+                self.lock.release()
+            elif cmd == 'requestPort':
+                self.lock.acquire()
+                self.requestPort()
+                self.lock.release()
             elif cmd == 'shutdown':
                 if self.username == 'admin':
                     return True
@@ -154,6 +180,7 @@ class Service:
         self.Send_message('accept')
 
     def close(self):
+        self.database.offine(self.username)
         self.Send_message('done')
         self.socket.close()
 
