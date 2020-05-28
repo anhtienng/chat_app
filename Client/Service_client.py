@@ -61,15 +61,26 @@ class Service_client(threading.Thread):
                 cmd = self.Receive_message()['data']
                 if cmd == 'Idle':
                     continue
+
+                # send username to peer
                 elif cmd == 'Verify':
                     self.on_verify()
+
+                #receive sms from peer
                 elif cmd == 'sendSMS':
                     mess = self.Receive_SMS()
                     print(mess)
             else:
-                self.Send_SMS(self.buffer.string())
+                cmd, content = self.buffer.string()
+                #send SMS to peer
+                if cmd == 'SendSMS':
+                    self.Send_SMS(content)
+
+                elif cmd == 'Sendfile':
+                    self.Send_file(content)
+
                 self.lock.acquire()
-                self.buffer.assign('')
+                self.buffer.assign('', '')
                 self.lock.release()
 
     def accept(self):

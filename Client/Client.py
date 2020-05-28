@@ -190,7 +190,8 @@ class Client:
         service.start()
 
     def chatTo(self, username, message):
-        print(message)
-        self.buff_dict[username].assign(message)
+        self.buff_dict[username].assign('SendSMS', message)
 
 
+    def sendFileTo(self, username, filename):
+        self.buff_dict[username].assign('Sendfile', filename)

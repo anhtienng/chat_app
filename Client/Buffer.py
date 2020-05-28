@@ -1,12 +1,17 @@
 class Buffer:
     def __init__(self):
-        self.content = ''
+        self.cmd = ''
+        self. content = ''
 
     def __len__(self):
-        return len(self.content)
+        if self.cmd:
+            return 1
+        else:
+            return 0
 
-    def assign(self, message):
-        self.content = message
+    def assign(self, cmd, content):
+        self.cmd = cmd
+        self.content = content
 
     def string(self):
-        return self.content
+        return self.cmd, self.content
