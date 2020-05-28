@@ -5,6 +5,7 @@ import Buffer
 HEADER_LENGTH = 10
 
 HOST = "192.168.2.15" # Server's IP
+DEVICE_HOST = "192.168.2.15"
 PORT = 13000
 
 class Client:
@@ -36,7 +37,7 @@ class Client:
     def setPort(self):
         print('setPort')
         self.Send_message('setPort')
-        host = self.listen_socket.getsockname()[0]
+        host = DEVICE_HOST
         port = self.listen_socket.getsockname()[1]
 
         self.Send_message(host)

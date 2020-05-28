@@ -67,7 +67,7 @@ class Service_client(threading.Thread):
             
             with open(filename, "rb") as in_file:
                 while True:
-                    data = in_file.read(1024)
+                    data = in_file.read(256)
                     if len(data) == 0:
                         self.Send_message('EOF')
                         break
@@ -87,7 +87,7 @@ class Service_client(threading.Thread):
                 response = self.Receive_message()['data']
                 if response == 'EOF':
                     break
-                else:
+                elif response == 'Data':
                     data = self.Receive_byte()['data']
                     out_file.write(data)
                     
