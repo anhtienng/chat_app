@@ -45,6 +45,7 @@ class Service:
             self.password = password
             self.database.online(username)
             print("Welcome", username)
+            self.database.save()
         else:
             self.Send_message('Failed')
 
@@ -101,6 +102,7 @@ class Service:
         username = self.Receive_message()['data']
         if self.database.addFriend(self.username, username):
             self.Send_message("Successed")
+            self.database.save()
         else:
             self.Send_message("Failed")
 
@@ -108,6 +110,7 @@ class Service:
         username = self.Receive_message()['data']
         if self.database.acceptFriendRequest(self.username, username):
             self.Send_message("Successed")
+            self.database.save()
         else:
             self.Send_message("Failed")
 
@@ -115,6 +118,7 @@ class Service:
         username = self.Receive_message()['data']
         if self.database.rejectFriendRequest(self.username, username):
             self.Send_message("Successed")
+            self.database.save()
         else:
             self.Send_message("Failed")
 
@@ -130,6 +134,11 @@ class Service:
     def requestPort(self):
         username = self.Receive_message()['data']
         print(username)
+        if not self.database.isRegistered(username):  # unregistered username
+            self.Send_message('Failed')
+        listFriend = self.database.userFriend[self.username]
+        if username not in listFriend:   # not friend
+            self.Send_message('Failed')
         host, port = self.database.port_dict[username]
         if port is None or host is None:
             self.Send_message('Failed')
@@ -200,5 +209,3 @@ class Service:
             elif cmd == 'Login':
                 self.Login()
                 break
-            #elif... 
-            

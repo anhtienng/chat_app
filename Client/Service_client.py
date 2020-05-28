@@ -5,6 +5,7 @@ HEADER_LENGTH = 10
 HOST = '127.0.0.1'
 Destination = 'download/'
 
+
 class Service_client(threading.Thread):
     def __init__(self, socket, buff, username, peer = None):
         super(Service_client, self).__init__()
@@ -79,7 +80,6 @@ class Service_client(threading.Thread):
             print('No such file')
             return False
 
-
     def Receive_File(self):
         filename = Destination + self.Receive_message()['data']
         with open(filename, "wb") as out_file:
@@ -90,8 +90,7 @@ class Service_client(threading.Thread):
                 elif response == 'Data':
                     data = self.Receive_byte()['data']
                     out_file.write(data)
-                    
-            
+
     def run(self):
         while True:
             if len(self.buffer) == 0:

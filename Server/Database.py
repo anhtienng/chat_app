@@ -16,10 +16,9 @@ class Database:
         self.lock = threading.Lock()
 
         self.port_dict = {}
-        #self.load()
+        self.load()
 
     def save(self):
-        # TODO
         # save data to file
         with open("Data/userDict.pkl", "wb") as f1:
             pickle.dump(self.userDict, f1, pickle.HIGHEST_PROTOCOL)
@@ -32,7 +31,6 @@ class Database:
         self.port_dict[username] = (host, port)
 
     def load(self):
-        # TODO
         # retreive data from file
         with open('Data/userDict.pkl', 'rb') as f1:
             self.userDict = pickle.load(f1)
@@ -47,7 +45,7 @@ class Database:
         else:
             return False
 
-    def getStatus (self, username):
+    def getStatus(self, username):
         if not self.isRegistered(username):
             return None
         return self.userDict[username].status
@@ -64,7 +62,6 @@ class Database:
         return True
 
     def addFriend(self, username1, username2):
-        # TODO
         # Args: username1:sender, username2: receiver
         # Add username1 into friendRequest of username2
         if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):  # check registration
@@ -81,7 +78,6 @@ class Database:
             return True
 
     def showFriend(self, username):
-        # TODO
         # Args: username
         # return: a ordered dict {friendName: status}, online first
         if not self.isRegistered(username):
@@ -94,7 +90,6 @@ class Database:
         return friendDict
 
     def showFriendRequest(self, username):
-        # TODO
         # Args: username
         # return: an unordered list of friend requests of user with name username
         if not self.isRegistered(username):
@@ -103,7 +98,6 @@ class Database:
             return self.userFriendRequest[username]
 
     def acceptFriendRequest(self, username2, username1):
-        # TODO
         # Args: username1, username2
         # Accept friend request of username1 for username2. Adding them in their friendlist
         if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):
@@ -122,7 +116,6 @@ class Database:
             return True
 
     def rejectFriendRequest(self, username2, username1):
-        # TODO
         # Args: username1, username2
         # Reject friend request of username1 for username2.
         if (not self.isRegistered(username1)) or (not self.isRegistered(username2)):
@@ -141,16 +134,13 @@ class Database:
     def Login(self, username, password):
         if not self.isRegistered(username):
             return False
-        
         if self.userDict[username].password != password:
-            return Fasle
-
+            return False
         return True
 
     def online(self, username):
         if not self.isRegistered(username):
             return False
-        
         else:
             self.userDict[username].status = True
             return True
@@ -158,7 +148,6 @@ class Database:
     def offline(self, username):
         if not self.isRegistered(username):
             return False
-
         else:
             self.userDict[username].status = False
             return True

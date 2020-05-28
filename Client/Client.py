@@ -4,8 +4,8 @@ import threading
 import Buffer
 HEADER_LENGTH = 10
 
-HOST = "192.168.2.15" # Server's IP
-DEVICE_HOST = "192.168.2.15"
+HOST = "127.0.0.1" # Server's IP
+DEVICE_HOST = "127.0.0.1"
 PORT = 13000
 
 class Client:
@@ -29,7 +29,7 @@ class Client:
 
     def Listen(self):
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.bind(("",0))
+        self.listen_socket.bind(("", 0))
         self.setPort()
         self.listen_thread = threading.Thread(target=self.listen_run, args=())
         self.listen_thread.start()
@@ -186,6 +186,8 @@ class Client:
             service.start()
 
     def startChatTo(self, username):
+        if self.requestPort(username) is None:
+            return False
         (host, port) = self.requestPort(username)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         buff = Buffer.Buffer(self.lock)
@@ -193,18 +195,24 @@ class Client:
         self.buff_dict[username] = service.buffer
         service.connectTo(host, port)
         service.start()
+        return True
 
     def chatTo(self, username, message):
         if username in self.buff_dict:
             self.buff_dict[username].assign('SendSMS', message)
         else:
-            self.startChatTo(username)
-            self.buff_dict[username].assign('SendSMS', message)
-
+            check = self.startChatTo(username)
+            if check:
+                self.buff_dict[username].assign('SendSMS', message)
+            else:
+                print("Not friend")
 
     def sendFileTo(self, username, filename):
         if username in self.buff_dict:
             self.buff_dict[username].assign('SendFile', filename)
         else:
-            self.startChatTo(username)
-            self.buff_dict[username].assign('SendFile', filename)
+            check = self.startChatTo(username)
+            if check:
+                self.buff_dict[username].assign('SendFile', filename)
+            else:
+                print("Not friend")
