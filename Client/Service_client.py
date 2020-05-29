@@ -50,8 +50,8 @@ class Service_client(threading.Thread):
         data_header = f"{len(data):<{HEADER_LENGTH}}".encode('utf-8')
         self.socket.send(data_header + data)    
 
-    def connectTo(self, host, port):
-        self.socket.connect((host,port))
+    def connectTo(self, addr):
+        self.socket.connect(addr)
 
     def Send_SMS(self, message):
         self.Send_message("sendSMS")

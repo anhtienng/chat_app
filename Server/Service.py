@@ -136,9 +136,13 @@ class Service:
         print(username)
         if not self.database.isRegistered(username):  # unregistered username
             self.Send_message('Failed')
+            return
+
         listFriend = self.database.userFriend[self.username]
         if username not in listFriend:   # not friend
             self.Send_message('Failed')
+            return
+
         host, port = self.database.port_dict[username]
         if port is None or host is None:
             self.Send_message('Failed')

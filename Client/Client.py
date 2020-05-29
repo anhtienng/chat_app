@@ -4,8 +4,8 @@ import threading
 import Buffer
 HEADER_LENGTH = 10
 
-HOST = "127.0.0.1" # Server's IP
-DEVICE_HOST = "127.0.0.1"
+HOST = "191.16.9.212" # Server's IP
+DEVICE_HOST = "191.16.9.212"
 PORT = 13000
 
 class Client:
@@ -186,14 +186,14 @@ class Client:
             service.start()
 
     def startChatTo(self, username):
-        if self.requestPort(username) is None:
+        addr = self.requestPort(username)
+        if addr is None:
             return False
-        (host, port) = self.requestPort(username)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         buff = Buffer.Buffer(self.lock)
         service = Service_client.Service_client(s, buff, self.username, peer = username)
         self.buff_dict[username] = service.buffer
-        service.connectTo(host, port)
+        service.connectTo(addr)
         service.start()
         return True
 
