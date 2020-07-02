@@ -2,10 +2,11 @@ import socket
 import Service_client
 import threading
 import Buffer
+import GUII
 HEADER_LENGTH = 10
 
-HOST = "191.16.9.212" # Server's IP
-DEVICE_HOST = "191.16.9.212"
+HOST = "192.168.2.15" # Server's IP
+DEVICE_HOST = "192.168.0.103"#"192.168.2.15"
 PORT = 13000
 
 class Client:
@@ -13,7 +14,10 @@ class Client:
         self.socket = None
         self.listen_socket = None
         self.buff_dict = {}
+        self.message_list_dict = {}
         self.lock = threading.Lock()
+        self.target = None
+        self.listen_flag = True
 
     def Connect(self):
         #This method will connect client socket to server socket 
@@ -37,7 +41,7 @@ class Client:
     def setPort(self):
         print('setPort')
         self.Send_message('setPort')
-        host = DEVICE_HOST
+        host = self.ip
         port = self.listen_socket.getsockname()[1]
 
         self.Send_message(host)
@@ -172,18 +176,38 @@ class Client:
     def close(self):
         self.Send_message('done')
         self.socket.close()
+        for username in self.buff_dict:
+            self.buff_dict[username].assign('done', '')
+
+        host = self.ip
+        self.listen_flag = False
+        if self.listen_socket is not None:
+            port = self.listen_socket.getsockname()[1]
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))
+            s.close()
 
     def close_response(self):
         self.socket.close()
 
     def listen_run(self):
         self.listen_socket.listen()
-        while True:
+        while self.listen_flag:
+            print('accept1')
             conn, addr = self.listen_socket.accept()
-            buff = Buffer.Buffer(self.lock)
-            service = Service_client.Service_client(conn, buff, self.username)
-            self.buff_dict[service.peer] = service.buffer
-            service.start()
+            if self.listen_flag:
+                buff = Buffer.Buffer(self.lock)
+                message_list = GUII.Message_list(self.chatui.Message_box_frame)
+                service = Service_client.Service_client(conn, buff, message_list, self.username, ip = self.ip)
+                self.buff_dict[service.peer] = service.buffer
+                if service.peer in self.message_list_dict:
+                    service.message_list = self.message_list_dict[service.peer]
+                else:
+                    self.message_list_dict[service.peer] = service.message_list
+                self.chatui.update()
+                service.start()
+            
+        print('closed')
 
     def startChatTo(self, username):
         addr = self.requestPort(username)
@@ -191,24 +215,37 @@ class Client:
             return False
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         buff = Buffer.Buffer(self.lock)
-        service = Service_client.Service_client(s, buff, self.username, peer = username)
-        self.buff_dict[username] = service.buffer
+        if username in self.message_list_dict:
+            service = Service_client.Service_client(s, buff, self.message_list_dict[username], self.username, peer = username, ip = self.ip)
+            self.buff_dict[username] = service.buffer 
+        else:
+            message_list = GUII.Message_list(self.chatui.Message_box_frame)
+            service = Service_client.Service_client(s, buff, message_list, self.username, peer = username, ip = self.ip)
+            self.buff_dict[username] = service.buffer
+            self.message_list_dict[username] = service.message_list
+        print(addr)
         service.connectTo(addr)
         service.start()
+        self.chatui.update()
         return True
 
-    def chatTo(self, username, message):
-        if username in self.buff_dict:
+    def chatTo(self, message):
+        if self.target is None:
+            return
+        username = self.target
+        if username in self.buff_dict and self.buff_dict[username].status == True:
             self.buff_dict[username].assign('SendSMS', message)
+            print('yet')
         else:
             check = self.startChatTo(username)
             if check:
                 self.buff_dict[username].assign('SendSMS', message)
             else:
-                print("Not friend")
+                self.chatui.update()
 
-    def sendFileTo(self, username, filename):
-        if username in self.buff_dict:
+    def sendFileTo(self, filename):
+        username = self.target
+        if username in self.buff_dict and self.buff_dict[username].status == True:
             self.buff_dict[username].assign('SendFile', filename)
         else:
             check = self.startChatTo(username)
@@ -216,3 +253,13 @@ class Client:
                 self.buff_dict[username].assign('SendFile', filename)
             else:
                 print("Not friend")
+
+    def run(self):
+        self.loginui = GUII.LoginWindow(self, ('Helvetica', 13))
+        self.loginui.run()
+        
+        self.chatui = GUII.ChatWindow(self, ('Helvetica', 13))
+        self.chatui.run()
+
+    def configIP(self, ip):
+        self.ip = ip

@@ -143,10 +143,11 @@ class Service:
             self.Send_message('Failed')
             return
 
-        host, port = self.database.port_dict[username]
-        if port is None or host is None:
+        if username not in self.database.port_dict:
+            print(self.database.port_dict)
             self.Send_message('Failed')
         else:
+            host, port = self.database.port_dict[username]
             self.Send_message('Successed')
             self.Send_message(host)
             port = f"{port:<{HEADER_LENGTH}}".encode('utf-8')

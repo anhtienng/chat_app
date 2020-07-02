@@ -3,6 +3,7 @@ class Buffer:
         self.lock = lock
         self.cmd = ''
         self. content = ''
+        self.status = True
 
     def __len__(self):
         if self.cmd:
@@ -18,3 +19,8 @@ class Buffer:
 
     def string(self):
         return self.cmd, self.content
+
+    def off(self):
+        self.lock.acquire()
+        self.status = False
+        self.lock.release()

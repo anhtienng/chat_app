@@ -1,6 +1,8 @@
+#!/usr/bin/python3
+
 import socket
 import Server
 
-server = Server.Server(3)
+server = Server.Server(10)
 
 server.Run()

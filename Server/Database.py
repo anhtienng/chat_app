@@ -29,15 +29,23 @@ class Database:
 
     def setPort(self, username, host, port):
         self.port_dict[username] = (host, port)
+        
+    def initOffline(self):
+        for name, user in self.userDict.items():
+            user.status = False
 
     def load(self):
-        # retreive data from file
-        with open('Data/userDict.pkl', 'rb') as f1:
-            self.userDict = pickle.load(f1)
-        with open('Data/userFriend.pkl', 'rb') as f2:
-            self.userFriend = pickle.load(f2)
-        with open('Data/userFriendRequest.pkl', 'rb') as f3:
-            self.userFriendRequest = pickle.load(f3)
+        try:
+            # retreive data from file
+            with open('Data/userDict.pkl', 'rb') as f1:
+                self.userDict = pickle.load(f1)
+                self.initOffline()
+            with open('Data/userFriend.pkl', 'rb') as f2:
+                self.userFriend = pickle.load(f2)
+            with open('Data/userFriendRequest.pkl', 'rb') as f3:
+                self.userFriendRequest = pickle.load(f3)
+        except:
+            return
 
     def isRegistered(self, username):
         if username in self.userDict:
@@ -58,6 +66,7 @@ class Database:
         self.userDict[username] = User.User(username, password)
         self.userFriend[username] = []
         self.userFriendRequest[username] = []
+        self.save()
         self.lock.release()
         return True
 
@@ -73,6 +82,7 @@ class Database:
         else:
             self.lock.acquire()
             listRequest.append(username1)
+            self.save()
             self.lock.release()
             print(self.userFriendRequest[username2])
             return True
@@ -112,6 +122,7 @@ class Database:
             listFriend1.append(username2)
             listFriend2.append(username1)
             listRequest2.remove(username1)
+            self.save()
             self.lock.release()
             return True
 
@@ -128,6 +139,7 @@ class Database:
         else:
             self.lock.acquire()
             listRequest2.remove(username1)
+            self.save()
             self.lock.release()
             return True
 
@@ -150,4 +162,5 @@ class Database:
             return False
         else:
             self.userDict[username].status = False
+            del self.port_dict[username]
             return True

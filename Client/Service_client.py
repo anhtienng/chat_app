@@ -1,13 +1,15 @@
 import threading
+import socket
 import os
 
 HEADER_LENGTH = 10
-HOST = '127.0.0.1'
+HOST = "192.168.2.15"
+DEVICE_HOST = '192.168.0.103'
 Destination = 'download/'
 
 
 class Service_client(threading.Thread):
-    def __init__(self, socket, buff, username, peer = None):
+    def __init__(self, socket, buff, message_list, username, peer = None, ip = ''):
         super(Service_client, self).__init__()
         self.socket = socket
         self.username = username
@@ -16,6 +18,8 @@ class Service_client(threading.Thread):
         else:
             self.peer = self.verify()
         self.buffer = buff
+        self.message_list = message_list
+        self.ip = ip
 
     def Receive_message(self):
         message_header = self.socket.recv(HEADER_LENGTH)
@@ -56,45 +60,80 @@ class Service_client(threading.Thread):
     def Send_SMS(self, message):
         self.Send_message("sendSMS")
         self.Send_message(message)
+        self.message_list.write('Me: ' + message + '\n')
 
     def Receive_SMS(self):
         mess = self.Receive_message()['data']
+        self.message_list.write(self.peer + ': ' + mess + '\n')
         return mess
 
     def Send_File(self, filename):
         if os.path.exists(filename):
             self.Send_message("sendFile")
             self.Send_message(filename)
-            
-            with open(filename, "rb") as in_file:
-                while True:
-                    data = in_file.read(256)
-                    if len(data) == 0:
-                        self.Send_message('EOF')
-                        break
-                    else:
-                        self.Send_message('Data')
-                        self.Send_byte(data)
-            return True
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind(("", 0))
+            host = self.ip
+            port = s.getsockname()[1]
+            s.listen()
+            self.Send_message(host)
+            port = f"{port:<{HEADER_LENGTH}}".encode('utf-8')
+            self.socket.send(port)
+            conn, addr = s.accept()
+            thread = threading.Thread(target=self.Send_File_thread, args=(filename,conn))
+            thread.start()
         else:
             print('No such file')
             return False
 
     def Receive_File(self):
-        filename = Destination + self.Receive_message()['data']
+        filename = self.Receive_message()['data']
+        filename = filename.split('/')[-1]
+        filename = Destination + filename
+        host = self.Receive_message()['data']
+        port = self.socket.recv(HEADER_LENGTH)
+        port = int(port.decode('utf-8').strip())
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print(host)
+        print(port)
+        s.connect((host,port))
+        
+        
+        
+        thread = threading.Thread(target=self.Receive_File_thread, args=(filename,s))
+        thread.start()
+
+    def Send_File_thread(self, filename, conn):
+        with open(filename, "rb") as in_file:
+            while True:
+                data = in_file.read(2048)
+                if not data:
+                    break
+                conn.send(data)
+        conn.close()
+
+    def Receive_File_thread(self, filename, conn):
         with open(filename, "wb") as out_file:
             while True:
-                response = self.Receive_message()['data']
-                if response == 'EOF':
+                print('reading...')
+                data = conn.recv(1024)
+                if not data:
                     break
-                elif response == 'Data':
-                    data = self.Receive_byte()['data']
-                    out_file.write(data)
+                out_file.write(data)
+        print('readed')
+        conn.close()
+
 
     def run(self):
         while True:
             if len(self.buffer) == 0:
-                self.Send_message("Idle")
+                try:
+                    self.Send_message("Idle")
+                except:
+                    self.close_response()
+                    print('close not safe')
+                    break
+
                 cmd = self.Receive_message()['data']
                 if cmd == 'Idle':
                     continue
@@ -111,6 +150,11 @@ class Service_client(threading.Thread):
                 elif cmd == 'sendFile':
                     self.Receive_File()
 
+                elif cmd == 'done':
+                    self.close_response()
+                    print('close')
+                    break
+
             else:
                 cmd, content = self.buffer.string()
                 if cmd == 'SendSMS':
@@ -119,17 +163,28 @@ class Service_client(threading.Thread):
                 elif cmd == 'SendFile':
                     self.Send_File(content)
 
-                self.buffer.assign('', '')
+                elif cmd == 'done':
+                    self.close()
+                    print('close')
+                    break
 
+                self.buffer.assign('', '')
+        
+
+        self.buffer.off()
+        
     def accept(self):
         self.Send_message('accept')
 
     def close(self):
         self.Send_message('done')
+        data = self.socket.recv(1024)
+        while data:
+            data = self.socket.recv(1024)
         self.socket.close()
 
     def close_response(self):
-        self.database.offline(self.username)
+        self.message_list.write(self.peer + ' is offline! \n')
         self.socket.close()
 
     def verify(self):
